@@ -1,0 +1,304 @@
+# 🧙‍♂️ MASTER GAME SPECIFICATION: „MERLINS PRÜFUNG“
+### *High-Voxel Action-RPG & Dungeon Crawler mit autonomem Gruppenkampf*
+
+---
+
+## PROMPT-KOPF (Für die neue KI im neuen Chat)
+> *„Du bist ein erfahrener Spieleentwickler und Godot-4-Experte. Deine Aufgabe ist es, das folgende Spiel von Grund auf vollständig, modular und fehlerfrei in Godot 4 (GDScript) umzusetzen (Wir nutzen Godot_v4.7.2-stable_win64.exe). Halte dich exakt an die untenstehende Spezifikation. Verwende keine unfertigen Platzhalter. Beginne nach Bestätigung dieser Vorgabe mit Modul 1.“*
+
+---
+
+## 1. LORE, STORY & DIE 6 GESETZE DER PRÜFUNG
+
+### 1.1 Hintergrundgeschichte
+19 Jahre nach der Schlacht um Hogwarts: Harry, Hermine und Ron sind als Erwachsene bei einem Elterngespräch ihrer Kinder in Hogwarts. In einem verlassenen Korridor des vierten Stocks gibt der Steinboden nach. Sie stürzen in eine vergessene Krypta unter der Schule. Eine massive Steinpforte verriegelt sich magisch hinter ihnen. An den Wänden glühen die uralten Runen von **Merlins Prüfung** auf.
+
+### 1.2 Die 6 unverletzlichen Gesetze
+1. **① Der Tod ist kein Ende:** Fällt der Anführer, formiert sich die Gruppe am Beginn der aktuellen Dekade neu (Checkpoints bei Raum 1, 11, 21, 31, 41...).
+2. **② Fortschritt ist dauerhaft:** Alle 10 Räume verankert sich das Seelenband unwiderruflich im Dungeon.
+3. **③ Wächter des Zehnten:** Jeder zehnte Raum (10, 20, 30 ... 90) ist eine monumentale Bosskammer mit einem uralten Wächter.
+4. **④ Gabe der Macht:** Besiegte Kreaturen hinterlassen arkane Energie; Helden und Begleiter erhalten Talentpunkte.
+5. **⑤ Es gibt keine Abkürzung:** Exakt 100 modulare Kammern trennen die Helden von der Oberwelt.
+6. **⑥ Das Bannsiegel:** Das finale Portal zur Freiheit öffnet sich erst nach dem Sieg über den 100. Raum.
+
+---
+
+## 2. GRAFIK-STIL: HIGH-VOXEL (MICRO-VOXELS)
+
+* **Kein Low-Voxel (keine 5 Klötze):** Der Look orientiert sich an Titeln wie *The Touryst*, *Cloudpunk* oder *Teardown*.
+* **Micro-Voxel-Mesh-Generierung:**
+  * Jede Spielfigur besteht aus einem hochdichten Gitter aus hunderten winzigen Mikrovoxeln (ca. 0,07m Voxelgröße).
+  * Sichtbare Details: Faltenwurf der Umhänge, Muster der Gryffindor-Schals, Gesichtsmerkmale (Augen, Hauttöne), strukturierte Haare, Holzmaserung der Zauberstäbe mit leuchtenden Partikelspitzen.
+  * **Optimierung (Face-Culling):** Nur Außenflächen, die an Luft grenzen, werden als Quads generiert (keine verdeckten Innen-Polygone).
+* **Dungeon-Ästhetik:**
+  * Dunkle, gotische Hogwarts-Kerkerhallen.
+  * Steinmauern mit Relief-Ziegeln und Fugen.
+  * Massive Säulen mit Wandhalterungen.
+  * Dynamische Lichtquellen: Kaltes, mystisches blaues/cyanfarbenes Fackellicht (`OmniLight3D` mit Schatten) und gedämpftes Raumlicht.
+  * Volumetrischer Kerkernebel (`Environment` Fog).
+
+---
+
+## 3. MULTI-KAMERA-SYSTEM (3-in-1, UMSCHALTBAR PER TASTE `V`)
+
+Das Spiel unterstützt drei voll funktionsfähige Perspektiven, die nahtlos im laufenden Spiel durchgeschaltet werden:
+
+1. **Ego-Perspektive (First-Person):**
+   * Kamera auf Augenhöhe des Spielers (Y = 1.7m).
+   * Eigener Körper wird ausgeblendet.
+   * Mauszeiger wird gefangen (`Input.MOUSE_MODE_CAPTURED`).
+   * Freies Zielen über Mausbewegung (Pitch/Yaw mit Sensitivitäts-Multiplikator).
+   * Zentriertes Fadenkreuz auf dem Bildschirm.
+   * Bewegung erfolgt relativ zum Blickwinkel.
+2. **3D-Verfolgerkamera (Third-Person):**
+   * Isometrischer Blickwinkel schräg von oben/hinten (Offset ca. X=0, Y=11, Z=8.5, blickend auf den Spieler).
+   * Mauszeiger ist frei sichtbar.
+   * Spielfigur dreht sich weich in die Lauf- bzw. Zielrichtung.
+3. **2D-Draufsicht (Top-Down / Vogelperspektive):**
+   * Kamera steht senkrecht über dem Spieler (Y = 24m, blickend nach unten).
+   * Taktische Retro-Arcade-Übersicht über den gesamten Raum.
+
+---
+
+## 4. HELDEN- & AUTONOMES PARTY-SYSTEM
+
+Zu Beginn wählt der Spieler **einen** Hauptcharakter. Die beiden nicht gewählten Helden werden zu **vollständig autonomen KI-Begleitern**, die Seite an Seite mit dem Spieler kämpfen.
+
+### 4.1 Die drei Helden-Archetypen
+
+| Attribut / Feature | Harry Potter ⚡ | Hermine Granger 📚 | Ron Weasley 🛡️ |
+| :--- | :--- | :--- | :--- |
+| **Rolle** | Allrounder / Schadens-Buff | Heilerin / Hohe Magie & Frost | Tank / Schutzschild & Explosion |
+| **Basis-Leben (HP)** | 130 HP | 95 HP | 180 HP |
+| **Basis-Mana (MP)** | 110 MP | 190 MP | 90 MP |
+| **Mana-Regeneration** | 14 MP/Sek. | 24 MP/Sek. (sehr schnell) | 11 MP/Sek. |
+| **Lauftempo** | 13 (schnell) | 12.5 | 11.5 |
+| **Grundschaden** | +25% Multiplikator | +45% Multiplikator | +10% Multiplikator |
+| **Grund-Rüstung** | 10% passive Reduktion | 5% passive Reduktion | 25% passive Reduktion |
+| **Farbpalette** | Roter Umhang, Goldschal, schwarzes Haar | Blauer Umhang, Goldschal, braunes Haar | Brauner Umhang, dunkler Schal, orangerotes Haar |
+| **Spezialzauber 1** | **Expecto Patronum** | **Episkey** | **Salvio Hexia** |
+| **Spezialzauber 2** | **Expelliarmus** | **Glacius** | **Bombarda** |
+
+### 4.2 KI-Verhalten der Begleiter
+* **Formations-Logik:** Begleiter halten automatisch eine lose Kampfformation hinter/neben dem Spieler. Entfernt sich der Spieler weiter als 12 Meter, brechen sie Angriffe ab und sprinten auf Schritthöhe auf.
+* **Zielerfassung:** Erfassen selbstständig den nächstgelegenen Gegner in Reichweite und feuern Stupor-Projektile ab.
+* **Autonomer Support:**
+  * **Hermine:** Überwacht die HP aller Gruppenmitglieder. Fällt jemand unter 60% HP, wirkt sie eigenständig *Episkey* (Gruppenheilung). Bei Feindansammlungen wirkt sie *Glacius*.
+  * **Ron:** Wirkt *Salvio Hexia* (Gruppenschild), sobald mehrere Feinde im Nahbereich sind; schießt *Bombarda* in dichte Gegnergruppen.
+  * **Harry (als Begleiter):** Zündet *Expecto Patronum* bei Kampfbeschleunigung und betäubt gefährliche Elite-Gegner mit *Expelliarmus*.
+* **Eigene Talentökonomie („Gegner-Klau“):**
+  * Begleiter erhalten eigene Kills gutgeschrieben.
+  * Sie sammeln eigene Talentpunkte und verteilen diese eigenständig nach ihrem Archetyp (Hermine steigert Magie, Ron Vitalität/Abwehr, Harry Magie/Schaden).
+
+---
+
+## 5. DAS MAGIE- & KAMPFSYSTEM (5 AKTIVE SLOTS)
+
+### 5.1 Basis-Zauber (Alle Helden)
+* **Slot 1 – Stupor (Taste 1 / Linksklick):**
+  * Schneller roter Lichtblitz. Kostet 6 MP, Cooldown 0.35s.
+  * 30 Grundschaden, leichter Rückstoß auf Feinde.
+* **Slot 2 – Incendio (Taste 2 / Rechtsklick):**
+  * Schwerer lodernder Feuerball. Kostet 28 MP, Cooldown 2.2s.
+  * 65 Grundschaden, erzeugt eine 6-Meter-Explosionssphäre (Flächenschaden).
+* **Slot 3 – Protego (Taste 3 / Leertaste):**
+  * Blaue Gittersphäre um den Charakter. Kostet 30 MP, Cooldown 6.0s.
+  * Hält 2.5 Sekunden an. Absorbiert 80% des erlittenen Schadens.
+
+### 5.2 Rollenspezifische Spezialzauber (Slots 4 & 5)
+* **Harry:**
+  * **Slot 4 – Expecto Patronum:** Kostet 45 MP, Cooldown 12.0s. Hüllt die Gruppe in silbernes Licht. **Gruppenbuff:** Erhöht den Schaden aller Gruppenmitglieder für 12 Sekunden um **+50%**.
+  * **Slot 5 – Expelliarmus:** Kostet 20 MP, Cooldown 4.0s. Violetter Entwaffnungsstrahl. Betäubt das Ziel für 2.5 Sekunden komplett.
+* **Hermine:**
+  * **Slot 4 – Episkey:** Kostet 35 MP, Cooldown 8.0s. Grüne Lebenswelle. Heilt **alle Gruppenmitglieder** sofort um 45 HP (skaliert mit Magiefokus).
+  * **Slot 5 – Glacius:** Kostet 25 MP, Cooldown 3.5s. Eisiger Froststoß. Friert alle Feinde in 18m Umkreis für 4 Sekunden fest.
+* **Ron:**
+  * **Slot 4 – Salvio Hexia:** Kostet 30 MP, Cooldown 10.0s. Goldene Barriere. **Gruppenbuff:** Erhöht die Schadensreduktion der gesamten Gruppe für 10 Sekunden um **+40%**.
+  * **Slot 5 – Bombarda:** Kostet 35 MP, Cooldown 5.0s. Gewaltige Detonation (110 Schaden, 8.5m Explosionsradius) mit extremem Rückstoß.
+
+---
+
+## 6. GEGNER-SYSTEM, SKALIERUNG & BOSS-WÄCHTER
+
+### 6.1 Standardfeinde
+1. **Dementor (Schattengeist):**
+   * Schwebender, schwarzer Voxel-Geist mit blau leuchtenden Augen.
+   * Schwebt wellenartig auf und ab, gleitet durch Hindernisse direkt auf den Spieler zu.
+   * Nahkampf-Fluchschaden mit Lebensabsaugung.
+2. **Acromantula (Riesenspinne):**
+   * Dunkelbrauner Körper, 8 Gliedmaßen, glühend rote Augen.
+   * Sehr hohes Lauftempo, versucht Ziele zu umzingeln.
+3. **Todesser / Dunkler Magier:**
+   * Schwarze Robe mit silberner Voxel-Totenkopfmaske.
+   * Hält Distanz (Fernkämpfer) und feuert grüne Todesflüche (`enemy_bolt`) ab, denen man per Schritt ausweichen muss.
+
+### 6.2 Wächter-Bosse (Raum 10, 20, 30... 90)
+* **Uralter Schwellen-Wächter:**
+  * Dreifache Spielergröße, monumentaler Steingolem aus Basaltkuben mit glühend rotem Runenkern.
+  * Gewaltige Lebenspunkteleiste am oberen Bildschirmrand.
+  * Schwere Keulenschläge mit Bodenschockwellen.
+  * Garantiert +3 Talentpunkte bei Besiegung.
+
+### 6.3 Dungeon-Progression & Raum-Logik
+* Feindmenge skaliert pro Raum: `Anzahl = 5 + (Raum * 0.9)`.
+* Erst wenn **alle** Feinde einer Ebene vernichtet sind, erstrahlt das versiegelte Portal am Nordende in hellem Cyan.
+* Durchschreiten teleportiert die Gruppe in die nächste Kammer.
+
+---
+
+## 7. RPG-ATTRIBUTSYSTEM & TALENTBAUM (TASTE `C`)
+
+Besiegte Gegner lassen arkane Essenz fallen (Chance auf Talentpunkte, Bosse garantieren 3 Punkte). Über das Talentmenü können Punkte frei verteilt werden:
+
+1. **Vitalität:** +20 maximale HP pro Punkt.
+2. **Magiefokus:** +15% Zauberschaden auf alle Sprüche pro Punkt.
+3. **Abwehr:** +5% absolute Schadensreduktion pro Punkt (Hard-Cap bei 70%).
+4. **Schnelligkeit:** +0.8m/s Basis-Bewegungstempo pro Punkt.
+
+---
+
+## 8. SPEICHER-SYSTEM, CHECKPOINTS & BASE64-MANAGER
+
+### 8.1 Dekaden-Checkpoints (Regel ① & ②)
+* Stirbt der Hauptheld in Raum 1 bis 10 ➔ Respawn an Raum 1.
+* Stirbt er in Raum 17 ➔ Respawn an Raum 11.
+* Stirbt er in Raum 49 ➔ Respawn an Raum 41.
+
+### 8.2 Base64 Savegame-System
+Der gesamte Fortschritt wird in einem strukturierten JSON-Objekt gehalten:
+```json
+{
+  "checkpointRoom": 11,
+  "currentRoom": 14,
+  "selectedCharKey": "harry",
+  "skillPoints": 2,
+  "stats": { "vit": 3, "mag": 5, "def": 1, "spd": 2 },
+  "brightness": 1.0,
+  "volume": 0.5,
+  "sensitivity": 1.0
+}
+```
+* **Export-Funktion:** Wandelt das JSON in einen Base64-String um und legt ihn in die Zwischenablage (zum einfachen Teilen oder Sichern).
+* **Import-Funktion:** Liest einen Base64-String ein, parst ihn fehlertolerant und stellt den Spielstand sofort wieder her.
+* **Reset-Funktion:** Bereinigt alle lokalen Speicherdaten und setzt das Spiel auf Raum 1 zurück.
+
+---
+
+## 9. USER INTERFACE (HUD) & MENÜS
+
+* **Oben Links (Gruppen-Status):**
+  * Portrait des aktiven Helden mit Level, HP- und MP-Balken (inkl. Zahlenanzeige).
+  * Darunter: Kompakte HP-Statusbalken der beiden Begleiter.
+* **Oben Mitte (Dungeon-Info):**
+  * Raumnummer: `RAUM X / 100`.
+  * Aktiver Seelenanker: `Checkpoint: Raum Y`.
+  * Kameramodus-Anzeige: `[V] 1st Person / 3D / 2D`.
+  * Boss-Lebensleiste (erscheint nur in Bossräumen).
+* **Oben Rechts:**
+  * Button `[C] Talente` (mit rotem Zähler-Badge bei unverteilten Punkten).
+  * Button `[V] Perspektive`.
+  * Button `[O / Esc] Optionen & Speicherstand`.
+* **Bildschirmmitte:**
+  * Dynamische Benachrichtigungsbanner („Wächter besiegt!“, „Checkpoint gesetzt!“, „Hermine hat Magiefokus gesteigert!“).
+  * Aktive Buff-Symbole mit Countdown (*Patronum* / *Salvio Hexia*).
+* **Unten Mitte (Hotbar):**
+  * 5 Zauberslots mit Tasten-Indikatoren (`1/LMB`, `2/RMB`, `3/Leertaste`, `4`, `5`), Symbolen, Manakosten und radialem Cooldown-Overlay.
+
+---
+
+## 10. ARCHITEKTUR-RICHTLINIEN FÜR DEN GODOT 4 CODE
+
+1. **Version:** Godot 4.x (Standard GDScript).
+2. **Modularität:**
+   * `voxel_builder.gd` (Statischer Helfer für Voxel-Meshes).
+   * `player.gd` (CharacterBody3D mit integriertem 3-in-1 Cam-Rig).
+   * `companion.gd` (CharacterBody3D mit Ziel- & Support-KI).
+   * `spell_manager.gd` oder Projektil-Klassen (Pool für Zaubergeschosse).
+   * `dungeon_manager.gd` (Generierung der 100 Räume, Portale, Wände, Beleuchtung).
+   * `ui_manager.gd` (CanvasLayer für HUD, Talente, Optionen, Base64).
+3. **Robustheit:**
+   * Tastatureingaben direkt über physikalische Keycodes (`KEY_W`, `KEY_V` etc.) abfragen, um fehleranfällige Project-Settings zu umgehen.
+   * Saubere Fehlerbehandlung bei Savegame-Importen (`JSON.parse` Absicherung).
+   * Automatische Indentation (4 Spaces oder Tabs) konsequent einhalten.
+
+   ---
+
+   Da hast du absolut recht! 😄 Der letzte Teil (Sound-Synthese, der finale Boss in Raum 100, das Intro-Sequenz-Skript und die genaue Schritt-für-Schritt-Reihenfolge für die neue KI) hat noch gefehlt. 
+
+Hier ist der **vollständige Abschluss**, damit wirklich **kein einziges Detail** fehlt:
+
+---
+
+## 11. AUDIO-SYSTEM & SOUND-DESIGN
+
+Da wir keine externen MP3/WAV-Dateien herunterladen müssen, nutzt Godot 4 einen **prozeduralen Audio-Synthesizer** (`AudioStreamGenerator`), um alle Sounds mathematisch direkt zur Laufzeit zu erzeugen:
+
+1. **Stupor (Schockzauber):** Hoher Sinus-Ton, der schnell abfällt (850 Hz ➔ 250 Hz, 0.2s Dauer).
+2. **Incendio (Feuerstoß):** Tiefes Dreieckswellen-Fauchen mit Rauschanteil (320 Hz ➔ 60 Hz, 0.4s).
+3. **Protego (Schildbarriere):** Resonanter, ansteigender Sinus-Glockenton (450 Hz ➔ 650 Hz, 0.4s).
+4. **Episkey (Heilung):** Sanfter, hoher Heiler-Akkord (520 Hz ➔ 980 Hz, 0.5s).
+5. **Glacius (Frost/Eis):** Knisternder, harter Rechteckwellen-Impuls (800 Hz ➔ 200 Hz, 0.3s).
+6. **Salvio Hexia (Schutzwall):** Warmer, defensiver Brumm-Ton (300 Hz ➔ 500 Hz, 0.4s).
+7. **Bombarda (Sprengung):** Tiefer Sägezahn-Subbass mit Nachhall (180 Hz ➔ 30 Hz, 0.6s).
+8. **Expecto Patronum (Hirsch-Aura):** Sphärischer, mystischer Glanzton (600 Hz ➔ 1200 Hz, 0.6s).
+9. **Treffer / Hit:** Kurzer, dumpfer Rechteck-Schlag (160 Hz ➔ 40 Hz, 0.12s).
+10. **Portal-Aktivierung:** Tiefer, vibrierender Raumton, der in ein helles Klingeln übergeht (300 Hz ➔ 900 Hz, 0.8s).
+11. **Boss-Erscheinen:** Bedrohlicher, extrem tiefer Sägezahn-Groll (90 Hz ➔ 30 Hz, 1.0s).
+
+---
+
+## 12. DER FINALE ENDBOSS: RAUM 100 („MERLINS SCHATTEN“)
+
+Während die Räume 10 bis 90 von massiven Steingolems bewacht werden, bricht Raum 100 alle bisherigen Muster:
+
+* **Name:** *Merlins Schemen (The Arch-Warden)*
+* **Erscheinung:** Eine gewaltige, aus tausenden violett und golden schimmernden Mikrovoxeln bestehende Zauberergestalt mit flatterndem Astralumhang und Runenstab.
+* **Boss-Phasen:**
+  1. **Phase 1 (100% – 60% HP):** Feuert zielsuchende Dreifach-Flüche ab und teleportiert sich im Raum.
+  2. **Phase 2 (60% – 25% HP):** Beschwört 4 Dementoren als Schildwachen. Der Boss ist unverwundbar, bis alle 4 Dementoren vernichtet sind.
+  3. **Phase 3 (unter 25% HP – Enrage):** Raumfüllender Meteoritenregen aus Voxel-Trümmern. Hermines Heilung und Rons Schutzschilde müssen hier getimt werden, während Harry maximalen Schaden austeilt.
+* **Sieg-Sequenz:**
+  * Zeitlupe setzt ein.
+  * Das uralte Bannsiegel zerbricht in tausende Voxel-Partikel.
+  * Eine Steintreppe nach oben ins Sonnenlicht materialisiert sich.
+  * Ein stilisiertes Abspann-Fenster gratuliert dem Spieler zur Vollendung von *Merlins Prüfung* (inklusive Statistik: Spielzeit, Kills, Tode, MVPs der Begleiter).
+
+---
+
+## 13. INTRO- & CHARAKTERAUSWAHL-ABLAUF
+
+Bevor Raum 1 betreten wird, steuert das Spiel folgende Menü-Kette:
+
+1. **Startbildschirm:**
+   * Titel: *MERLINS PRÜFUNG* in goldener Serif-Schrift vor dem nebligen Dungeon-Hintergrund.
+   * Button: *„Prüfung beginnen“* (oder *„Spielstand importieren“*).
+2. **Story-Prolog:**
+   * Textkasten im Pergament-Design erzählt die Vorgeschichte (Elterngespräch, Schachtsturz, zuschlagendes Portal).
+   * Anzeige der **6 unverletzlichen Gesetze**.
+   * Button: *„Zur Heldenwahl ➔“*.
+3. **Heldenauswahl:**
+   * 3 Karten mit drehenden 3D-High-Voxel-Figuren von Harry, Hermine und Ron.
+   * Auflistung ihrer Basiswerte, Spezialzauber und ihrer Rolle.
+   * Klick auf *„Als [Name] antreten“* weist dem Spieler diesen Charakter zu, generiert die anderen beiden als KI-Begleiter, schaltet das HUD ein und lädt Raum 1.
+
+---
+
+## 14. SCHRITT-FÜR-SCHRITT UMSETZUNGS-PLAN (FÜR DEN NEUEN CHAT)
+
+Um zu verhindern, dass die neue KI wieder alles auf einmal generiert und Fehler produziert, sagst du ihr am besten, dass sie **in diesen 5 exakten Phasen** vorgehen soll:
+
+* **Phase 1: Das Fundament**
+  * `project.godot` (Minimal, keine fehlerhaften Input-Maps).
+  * `voxel_builder.gd` (Micro-Voxel-Generator mit Face-Culling für Charaktere und Wände).
+* **Phase 2: Spieler, Begleiter & Multi-Kamera**
+  * `player.gd` (CharacterBody3D mit First-Person, Third-Person und Top-Down per Taste `V`).
+  * `companion.gd` (Autonome KI für Ron & Hermine: Folgen, Ausweichen, Zielsuche).
+* **Phase 3: Das 5-Zauber-Kampfsystem & Sound**
+  * `spell_manager.gd` (Stupor, Incendio, Protego + die rollenspezifischen Spezialzauber).
+  * `sound_synth.gd` (Prozedurale Audio-Synthese für Zaubertöne und Treffer).
+* **Phase 4: Dungeon-Progression & Gegner-KI**
+  * `dungeon_manager.gd` (Prozedurale Kammern 1–100, Portale, Lichtfackeln, Säulen).
+  * `enemy.gd` (Dementoren, Spinnen, Todesser und Wächter-Golems).
+* **Phase 5: UI, HUD, Talente & Base64-Savegame**
+  * `hud.gd` (Party-Leisten, Cooldown-Slots, Boss-HP-Bar).
+  * `save_manager.gd` (Base64-Export/Import, Reset-Logik, Optionen-Menü).

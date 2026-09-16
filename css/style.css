@@ -1,0 +1,445 @@
+:root {
+  --gold: #dfb15b;
+  --gold-bright: #ffe28a;
+  --ui-bg: rgba(18, 12, 7, 0.92);
+  --ui-border: rgba(223, 177, 91, 0.45);
+}
+
+* {
+  box-sizing: border-box;
+  user-select: none;
+  margin: 0;
+  padding: 0;
+  font-family: 'Georgia', 'Cinzel', serif;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: #060403;
+  color: var(--gold);
+}
+
+/* Tisch & Atmosphäre */
+#desk-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-repeat: repeat;
+  z-index: 1;
+}
+
+#ambient-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+#candle-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 170, 70, 0.28) 0%, rgba(20, 10, 5, 0.7) 65%, rgba(5, 3, 2, 0.95) 100%);
+  z-index: 3;
+  transition: opacity 0.5s ease;
+}
+
+/* 3D Kameraperspektive Wrapper */
+#reading-viewport {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 4;
+  perspective: 1600px;
+}
+
+/* Antiker Ledereinband mit Goldkanten */
+#grimoire-casing {
+  position: relative;
+  padding: 16px;
+  background: radial-gradient(circle, #381f12 0%, #1e1008 70%, #0c0603 100%);
+  border-radius: 12px;
+  box-shadow: 0 25px 70px rgba(0,0,0,0.95), 0 0 35px rgba(223, 177, 91, 0.18);
+  border: 4px solid #4a2d1a;
+  transform-style: preserve-3d;
+  transition: transform 0.15s ease-out;
+}
+
+#grimoire-casing::before {
+  content: '';
+  position: absolute;
+  top: 6px; left: 6px; right: 6px; bottom: 6px;
+  border: 2px solid rgba(223, 177, 91, 0.4);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.casing-spine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 14px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, rgba(0,0,0,0.6) 0%, rgba(255,255,255,0.05) 50%, rgba(0,0,0,0.6) 100%);
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Container für das Heyzine Flipbook */
+#book-container {
+  position: relative;
+  /* DIN A5 Doppelseite (Breite ca. 1040px x Höhe ca. 735px) */
+  width: 1040px;
+  height: 735px;
+  background: #f4ecda;
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.4);
+}
+
+/* Initiale Platzhalterseiten */
+#placeholder-book {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.init-page {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f4ecd8 radial-gradient(circle, #f9f5ea 0%, #e6d8ba 90%);
+  border: 1px solid rgba(130, 90, 50, 0.2);
+}
+
+.init-left {
+  box-shadow: inset -15px 0 25px -10px rgba(0,0,0,0.3);
+}
+
+.init-right {
+  box-shadow: inset 15px 0 25px -10px rgba(0,0,0,0.3);
+}
+
+.parchment-content {
+  text-align: center;
+  color: #4a301e;
+  border: 2px dashed rgba(180, 140, 90, 0.45);
+  padding: 50px 30px;
+  border-radius: 8px;
+  width: 80%;
+}
+
+.parchment-content h2 {
+  font-size: 1.6rem;
+  margin-bottom: 12px;
+}
+
+.parchment-content .symbol {
+  font-size: 2.2rem;
+  margin: 15px 0;
+}
+
+.parchment-content .subtext {
+  display: block;
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: #8c6a4d;
+}
+
+/* StPageFlip Seiten-Styling */
+.page {
+  background-color: #f7f2e4;
+  overflow: hidden;
+}
+
+.page canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Negativ-Modus (Weiß auf Schwarz) */
+body.inverted-mode .page canvas {
+  filter: invert(1) hue-rotate(180deg) contrast(0.96) !important;
+}
+body.inverted-mode #book-container {
+  background: #0f0c09;
+}
+
+/* HUD Overlay */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 24px 30px;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.95);
+}
+
+.interactive {
+  pointer-events: auto;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.title-box h1 {
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  background: linear-gradient(45deg, #dfb15b, #fff0bb, #dfb15b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.title-box p {
+  font-size: 0.82rem;
+  color: #aa9275;
+  font-style: italic;
+}
+
+.top-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  background: var(--ui-bg);
+  color: var(--gold);
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.btn:hover {
+  border-color: var(--gold-bright);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(223, 177, 91, 0.35);
+}
+
+.btn-block {
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-group-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#instruction-hint {
+  align-self: center;
+  background: rgba(16, 10, 6, 0.85);
+  border: 1px solid var(--gold);
+  padding: 8px 24px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  pointer-events: none;
+  box-shadow: 0 0 20px rgba(223, 177, 91, 0.2);
+  animation: pulse 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; transform: scale(0.98); }
+  100% { opacity: 1; transform: scale(1.02); }
+}
+
+footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.page-indicator-pill {
+  background: var(--ui-bg);
+  border: 1px solid var(--ui-border);
+  border-radius: 30px;
+  padding: 10px 28px;
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.8);
+}
+
+.page-num {
+  cursor: pointer;
+  font-size: 0.95rem;
+  letter-spacing: 1px;
+  position: relative;
+}
+
+.page-num:hover::after {
+  content: '📌 Lesezeichen setzen';
+  position: absolute;
+  top: -34px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  background: #000;
+  color: var(--gold);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--gold);
+  white-space: nowrap;
+}
+
+.nav-arrow {
+  cursor: pointer;
+  color: var(--gold);
+  font-size: 1.3rem;
+  transition: transform 0.2s;
+}
+
+.nav-arrow:hover {
+  color: #fff;
+  transform: scale(1.25);
+}
+
+/* Modals */
+.panel-modal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  background: rgba(18, 11, 7, 0.96);
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 26px 30px;
+  width: 420px;
+  max-width: 92%;
+  color: var(--gold);
+  box-shadow: 0 15px 60px rgba(0,0,0,0.9), 0 0 30px rgba(223, 177, 91, 0.2);
+  backdrop-filter: blur(16px);
+  display: none;
+  z-index: 20;
+  opacity: 0;
+  transition: all 0.25s ease-out;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.panel-modal.visible {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--ui-border);
+  padding-bottom: 10px;
+  margin-bottom: 18px;
+}
+
+.panel-header h2 {
+  font-size: 1.2rem;
+  letter-spacing: 2px;
+}
+
+.close-btn {
+  cursor: pointer;
+  font-size: 1.3rem;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-size: 0.88rem;
+}
+
+.setting-item input[type="range"] {
+  accent-color: var(--gold);
+  cursor: pointer;
+  width: 140px;
+}
+
+.select-ui {
+  background: #120b07;
+  color: var(--gold);
+  border: 1px solid var(--ui-border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.bookmark-list {
+  max-height: 180px;
+  overflow-y: auto;
+  list-style: none;
+  border: 1px solid var(--ui-border);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.bookmark-list li {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-bottom: 1px dotted rgba(223, 177, 91, 0.2);
+  font-size: 0.88rem;
+}
+
+.bookmark-list li:hover {
+  background: rgba(223, 177, 91, 0.15);
+}
+
+input[type="file"] {
+  display: none;
+}
+/* Sanftes Ausblenden des HUDs */
+.hud {
+  transition: opacity 0.35s ease;
+}
+.hud.hud-hidden {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

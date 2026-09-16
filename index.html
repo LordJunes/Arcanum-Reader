@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Arcanum Grimoire – Heyzine Edition</title>
+  
+  <link rel="stylesheet" href="css/style.css">
+
+  <!-- Engines: PDF.js & StPageFlip (Heyzine-Grade Engine) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Tisch-Hintergrund & Partikel-Canvas -->
+  <div id="desk-surface">
+    <canvas id="ambient-canvas"></canvas>
+    <div id="candle-overlay"></div>
+  </div>
+
+  <!-- 3D Grimoire Rahmen mit Heyzine Page-Flip Engine -->
+  <div id="reading-viewport">
+    <div id="grimoire-casing">
+      <!-- Buchrücken & Goldränder -->
+      <div class="casing-spine"></div>
+      <div id="book-container">
+        <!-- Initiale leere Seiten vor dem PDF-Laden -->
+        <div id="placeholder-book">
+          <div class="init-page init-left">
+            <div class="parchment-content">
+              <h2>~ Arcanum Archivum ~</h2>
+              <p class="symbol">✦</p>
+              <p>Klicke auf eine der Seiten, um dein Buch zu laden</p>
+              <span class="subtext">Optimiert für DIN A5</span>
+            </div>
+          </div>
+          <div class="init-page init-right">
+            <div class="parchment-content">
+              <h2>~ Grimoire öffnen ~</h2>
+              <p class="symbol">📜</p>
+              <p>Harry Potter, Hamilton & alle Werke</p>
+              <span class="subtext">Echtes Heyzine-Umblättern</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hier bindet sich die Heyzine-Engine ein -->
+        <div id="flipbook"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Unsichtbare Datei-Uploads -->
+  <input type="file" id="file-input" accept="application/pdf">
+  <input type="file" id="bookmark-import-input" accept=".json">
+
+  <!-- HUD Interface -->
+  <div class="hud">
+    <header class="interactive">
+      <div class="title-box">
+        <h1 id="book-title">Arcanum Grimoire</h1>
+        <p id="book-meta">Klicke eine Buchseite an, um dein PDF zu entfesseln</p>
+      </div>
+
+      <div class="top-controls">
+        <button class="btn" id="btn-open">📜 PDF Laden</button>
+        <button class="btn" id="btn-invert">🌓 Negativ/Positiv</button>
+        <button class="btn" id="btn-mode">🕯️ Tag/Nacht</button>
+        <button class="btn" id="btn-bookmarks">🔖 Lesezeichen</button>
+        <button class="btn" id="btn-settings">⚙️ Zaubermenü</button>
+      </div>
+    </header>
+
+    <div id="instruction-hint">✨ Fasse mit der Maus an die Ecken zum Ziehen oder drücke [A] / [D]</div>
+
+    <footer class="interactive">
+      <div class="page-indicator-pill">
+        <span class="nav-arrow" id="arrow-prev">◀</span>
+        <span class="page-num" id="page-display">Seiten -- & --</span>
+        <span class="nav-arrow" id="arrow-next">▶</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Einstellungen Modal -->
+  <div class="panel-modal interactive" id="settings-modal">
+    <div class="panel-header">
+      <h2>Grimoire Einstellungen</h2>
+      <span class="close-btn" id="close-settings">✕</span>
+    </div>
+
+    <!-- Perspektive & Draufsicht -->
+    <div class="setting-item">
+      <label>Blickwinkel (Draufsicht)</label>
+      <input type="range" id="angle-slider" min="0" max="45" step="1" value="0">
+    </div>
+    <div class="setting-item">
+      <label>Zoom / Größe</label>
+      <input type="range" id="zoom-slider" min="0.70" max="1.75" step="0.02" value="1.0">
+    </div>
+
+    <!-- Licht & Atmosphäre -->
+    <div class="setting-item">
+      <label>Kerzenstärke</label>
+      <input type="range" id="candle-slider" min="0.3" max="1.0" step="0.05" value="0.75">
+    </div>
+    <div class="setting-item">
+      <label>Kerzenflackern</label>
+      <input type="checkbox" id="toggle-flicker" checked>
+    </div>
+
+    <!-- Holzart Tisch -->
+    <div class="setting-item">
+      <label>Holzart des Tisches</label>
+      <select id="select-wood" class="select-ui">
+        <option value="oak">Dunkle Eiche</option>
+        <option value="mahogany">Edles Mahagoni</option>
+        <option value="pine">Helle Kiefer</option>
+        <option value="ebony">Antikes Ebenholz</option>
+      </select>
+    </div>
+
+    <!-- Partikel -->
+    <div class="setting-item">
+      <label>Partikeldichte</label>
+      <select id="select-particles-density" class="select-ui">
+        <option value="20">Sehr wenig</option>
+        <option value="50">Wenig</option>
+        <option value="120" selected>Normal</option>
+        <option value="250">Viel</option>
+        <option value="500">Sehr viel</option>
+      </select>
+    </div>
+    <div class="setting-item">
+      <label>Partikelfarbe</label>
+      <select id="select-particles-color" class="select-ui">
+        <option value="#ffd375">Goldener Feenstaub</option>
+        <option value="#5ca7ff">Arkanes Mana-Blau</option>
+        <option value="#55ff99">Smaragdgrün</option>
+        <option value="#df66ff">Mystisches Violett</option>
+        <option value="#ff5533">Phönixfeuer-Rot</option>
+      </select>
+    </div>
+
+    <!-- Audio -->
+    <div class="setting-item">
+      <label>Blätter-Sound</label>
+      <select id="select-sound-type" class="select-ui">
+        <option value="parchment">Altes Pergament</option>
+        <option value="crisp">Frisches Buchpapier</option>
+        <option value="heavy">Schwerer Foliant</option>
+        <option value="whisper">Sanfter Hauch</option>
+      </select>
+    </div>
+    <div class="setting-item">
+      <label>Sound Lautstärke</label>
+      <input type="range" id="volume-slider" min="0" max="1" step="0.05" value="0.7">
+    </div>
+  </div>
+
+  <!-- Lesezeichen Modal -->
+  <div class="panel-modal interactive" id="bookmarks-modal">
+    <div class="panel-header">
+      <h2>Lesezeichen-Archiv</h2>
+      <span class="close-btn" id="close-bookmarks">✕</span>
+    </div>
+    <ul class="bookmark-list" id="bookmark-items">
+      <li style="text-align:center; color:#888;">Keine Lesezeichen hinterlegt</li>
+    </ul>
+    
+    <button class="btn btn-block" id="btn-add-bookmark" style="margin-top: 15px;">
+      + Aktuelle Seite merken
+    </button>
+    <div class="btn-group-row">
+      <button class="btn" id="btn-export-bookmarks" style="flex:1;">💾 Exportieren</button>
+      <button class="btn" id="btn-import-bookmarks" style="flex:1;">📂 Importieren</button>
+    </div>
+  </div>
+
+  <!-- Skripte -->
+  <script src="js/audio.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/ambient.js"></script>
+  <script src="js/bookmarks.js"></script>
+  <script src="js/flipbook.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
