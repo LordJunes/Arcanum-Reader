@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Arcanum Grimoire – Heyzine Edition</title>
   
   <link rel="stylesheet" href="css/style.css">
@@ -15,6 +15,10 @@
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
     }
   </script>
+
+  <!-- Google Auth & Picker APIs -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js" async defer></script>
 </head>
 <body>
 
@@ -36,16 +40,16 @@
             <div class="parchment-content">
               <h2>~ Arcanum Archivum ~</h2>
               <p class="symbol">✦</p>
-              <p>Klicke auf eine der Seiten, um dein Buch zu laden</p>
-              <span class="subtext">Optimiert für DIN A5</span>
+              <p>Klicke auf eine der Seiten oder wähle Google Drive</p>
+              <span class="subtext">Optimiert für DIN A5 & Handys</span>
             </div>
           </div>
           <div class="init-page init-right">
             <div class="parchment-content">
               <h2>~ Grimoire öffnen ~</h2>
               <p class="symbol">📜</p>
-              <p>Harry Potter, Hamilton & alle Werke</p>
-              <span class="subtext">Echtes Heyzine-Umblättern</span>
+              <p>Harry Potter, Hamilton & alle Folianten</p>
+              <span class="subtext">Echtes Heyzine-Umblättern & Offline-Speicher</span>
             </div>
           </div>
         </div>
@@ -69,15 +73,17 @@
       </div>
 
       <div class="top-controls">
+        <button class="btn" id="btn-library">📚 Archiv</button>
+        <button class="btn" id="btn-gdrive">☁️ Google Drive</button>
         <button class="btn" id="btn-open">📜 PDF Laden</button>
-        <button class="btn" id="btn-invert">🌓 Negativ/Positiv</button>
+        <button class="btn" id="btn-invert">🌓 Negativ</button>
         <button class="btn" id="btn-mode">🕯️ Tag/Nacht</button>
         <button class="btn" id="btn-bookmarks">🔖 Lesezeichen</button>
         <button class="btn" id="btn-settings">⚙️ Zaubermenü</button>
       </div>
     </header>
 
-    <div id="instruction-hint">✨ Fasse mit der Maus an die Ecken zum Ziehen oder drücke [A] / [D]</div>
+    <div id="instruction-hint">✨ Blättere mit der Maus, per Wisch-Geste am Handy oder drücke [A] / [D]</div>
 
     <footer class="interactive">
       <div class="page-indicator-pill">
@@ -86,6 +92,17 @@
         <span class="nav-arrow" id="arrow-next">▶</span>
       </div>
     </footer>
+  </div>
+
+  <!-- Offline Archiv / Bibliothek Modal -->
+  <div class="panel-modal interactive" id="library-modal">
+    <div class="panel-header">
+      <h2>Arcanum Archiv (Offline)</h2>
+      <span class="close-btn" id="close-library">✕</span>
+    </div>
+    <ul class="bookmark-list" id="library-items">
+      <li style="text-align:center; color:#888;">Lade Folianten...</li>
+    </ul>
   </div>
 
   <!-- Einstellungen Modal -->
@@ -102,7 +119,7 @@
     </div>
     <div class="setting-item">
       <label>Zoom / Größe</label>
-      <input type="range" id="zoom-slider" min="0.70" max="1.75" step="0.02" value="1.0">
+      <input type="range" id="zoom-slider" min="0.50" max="1.75" step="0.02" value="1.0">
     </div>
 
     <!-- Licht & Atmosphäre -->
@@ -189,6 +206,8 @@
   <script src="js/ambient.js"></script>
   <script src="js/bookmarks.js"></script>
   <script src="js/flipbook.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/gdrive.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

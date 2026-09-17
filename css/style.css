@@ -443,3 +443,67 @@ input[type="file"] {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+/* ========================================================
+   MOBILE & TABLET OPTIMIERUNG
+   ======================================================== */
+@media (max-width: 900px) {
+  .hud {
+    padding: 12px 14px;
+  }
+
+  header {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .title-box {
+    text-align: center;
+  }
+
+  .title-box h1 {
+    font-size: 1.15rem;
+    letter-spacing: 1.5px;
+  }
+
+  .title-box p {
+    font-size: 0.72rem;
+  }
+
+  .top-controls {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    max-width: 100%;
+  }
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    gap: 4px;
+  }
+
+  #instruction-hint {
+    font-size: 0.72rem;
+    padding: 6px 14px;
+    text-align: center;
+    width: 90%;
+  }
+
+  .page-indicator-pill {
+    padding: 8px 18px;
+    gap: 14px;
+    font-size: 0.85rem;
+  }
+
+  .panel-modal {
+    width: 94%;
+    padding: 18px 20px;
+  }
+
+  /* Ursprung für sauberes Skalieren zentrieren */
+  #grimoire-casing {
+    transform-origin: center center !important;
+  }
+}
